@@ -2,10 +2,12 @@
 .env
 __pycache__/
 
-data/raw/*
-data/parsed/*
-vector_store/*
-models/*
+data/milvus/
+data/parsed/
+vector_store/
+documents/
+*.pyc
+
 *.sqlite
 *.db
 *.faiss
@@ -24,6 +26,6 @@ models/*
 *.bmp
 *.ico
 *.tsv
-*.txt
+
 Data*/
 BasicData*/
