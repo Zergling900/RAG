@@ -94,7 +94,7 @@ def setup_embed_model():
 
 ##############################################################################
 MILVUS_URI = "http://localhost:19530"
-MILVUS_COLLECTION = "rag_collection"
+MILVUS_COLLECTION = "rag_pymupdf_v1"
 EMBED_DIM = 1536
 ##############################################################################
 Settings.llm = setup_llm()

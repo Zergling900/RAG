@@ -2,9 +2,11 @@ import json
 from pathlib import Path
 from hashlib import md5
 
-from llama_index.core import VectorStoreIndex, SimpleDirectoryReader
+from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, StorageContext
+from llama_index.readers.file import PyMuPDFReader
+
 from llama_index.vector_stores.milvus import MilvusVectorStore
-from llama_index.core import StorageContext
+
 
 from src.config import MILVUS_URI, MILVUS_COLLECTION, EMBED_DIM, DATA_DIR
 
@@ -26,17 +28,31 @@ def save_track(data):
     TRACK_FILE.write_text(json.dumps(data, indent=2))
 
 
+def get_track_key(path: Path):
+    return path.relative_to(DATA_DIR).as_posix()
+
+
+def iter_document_files():
+    return sorted(file for file in Path(DATA_DIR).rglob("*") if file.is_file())
+
+
 def get_new_documents():
     tracked = load_track()
     new_files = []
-    updated_track = tracked.copy()
+    updated_track = {}
+    seen_hashes = set()
 
-    for file in Path(DATA_DIR).glob("*"):
-        if file.is_file():
-            h = file_hash(file)
-            if file.name not in tracked or tracked[file.name] != h:
-                new_files.append(file)
-                updated_track[file.name] = h
+    for file in iter_document_files():
+        h = file_hash(file)
+        key = get_track_key(file)
+        updated_track[key] = h
+
+        if h in seen_hashes:
+            continue
+        seen_hashes.add(h)
+
+        if key not in tracked or tracked[key] != h:
+            new_files.append(file)
 
     return new_files, updated_track
 
@@ -61,7 +77,10 @@ def build_or_update_index():
     print(f"Ingesting {len(new_files)} new files...")
 
     documents = SimpleDirectoryReader(
-        input_files=[str(f) for f in new_files]
+        input_files=[str(f) for f in new_files],
+        file_extractor={
+            ".pdf": PyMuPDFReader()
+        }
     ).load_data()
 
     index = VectorStoreIndex.from_documents(
