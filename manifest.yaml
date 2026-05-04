@@ -1,0 +1,112 @@
+version: 1
+
+projects:
+  - project_id: w_be_surface_md
+    title: W-Be surface MD, potentials, NEB, and diffusion analysis
+    source_root: documents/code/w_be_surface_md
+    origin_root: /home/quanwei/second
+    description: >
+      Snapshot of the W/Be atomistic simulation codebase covering W-Be ABOP, W EAM2,
+      surface NEB workflows, least-squares MSD analysis, and activation-energy
+      fitting.
+    tags:
+      - tungsten
+      - beryllium
+      - W-Be
+      - molecular-dynamics
+      - surface-diffusion
+      - NEB
+
+    components:
+      - component_id: w_be_abop_potential
+        title: W-Be ABOP potential implementation and parameters
+        source_role: potential
+        system: W-Be
+        method: ABOP
+        include:
+          - w_be_abop_potential/potentials/abop/**/*.cpp
+          - w_be_abop_potential/potentials/shared/**/*.inc
+          - w_be_abop_potential/parameter_BeW_ABOP.pr2
+        related_paper_globs:
+          - documents/paper/**/Interatomic Potentials/*.pdf
+          - documents/paper/**/W-Be Mixed Materials & Dust-Wall/*.pdf
+
+      - component_id: w_eam2_potential
+        title: W EAM2 potential implementation and parameters
+        source_role: potential
+        system: W
+        method: EAM2
+        include:
+          - w_eam2_potential/potentials/eam2/**/*.cpp
+          - w_eam2_potential/potentials/eam2/**/*.h
+          - w_eam2_potential/parameter_W_EAM.p2
+          - w_eam2_potential/parameter.p4
+          - w_eam2_potential/run.eam2.sh
+          - w_eam2_potential/run2.eam2.sh
+        related_paper_globs:
+          - documents/paper/**/Interatomic Potentials/*.pdf
+          - documents/paper/**/Surface Diffusion Defects & Strain/*.pdf
+
+      - component_id: md_simulation_core
+        title: Shared MD simulation core and run scripts
+        source_role: simulation-core
+        system: W/W-Be
+        method: MD
+        include:
+          - md_simulation_core/common/**/*.cpp
+          - md_simulation_core/common/**/*.h
+          - md_simulation_core/docs/*.md
+          - md_simulation_core/compile_flags.txt
+          - md_simulation_core/Compilation.sh
+          - md_simulation_core/parameter.p1
+          - md_simulation_core/parameter.p3
+          - md_simulation_core/parameter.p5
+          - md_simulation_core/run.sh
+          - md_simulation_core/run1.sh
+          - md_simulation_core/run2.sh
+        related_paper_globs:
+          - documents/paper/**/MD BCA KMC Monte Carlo/*.pdf
+          - documents/paper/**/Interatomic Potentials/*.pdf
+
+      - component_id: neb_workflow
+        title: Surface NEB workflow tools
+        source_role: NEB
+        system: W/W-Be
+        method: NEB
+        include:
+          - neb_workflow/NEB/*.cpp
+          - neb_workflow/NEB/*.sh
+        related_paper_globs:
+          - documents/paper/**/Surface Diffusion Defects & Strain/*.pdf
+          - documents/paper/**/W-Be Mixed Materials & Dust-Wall/*.pdf
+
+      - component_id: least_squares_activation_fitting
+        title: MSD least-squares analysis and activation-energy fitting code
+        source_role: analysis
+        system: W
+        method: least-squares Arrhenius fitting
+        include:
+          - least_squares_activation_fitting/plot/*.py
+          - least_squares_activation_fitting/plot/diffusion_xy/*.py
+          - least_squares_activation_fitting/plot/*.md
+          - least_squares_activation_fitting/plot/diffusion_xy/*.md
+          - least_squares_activation_fitting/plotE.py
+          - least_squares_activation_fitting/plot.py
+          - least_squares_activation_fitting/plot2.py
+        related_paper_globs:
+          - documents/paper/**/Surface Diffusion Defects & Strain/*.pdf
+          - documents/paper/**/W-H-He Gas Clusters & Diffusion/*.pdf
+
+      - component_id: preprocessing_relax_tools
+        title: Frame cutting, relaxation, and state extraction tools
+        source_role: preprocessing
+        system: W/W-Be
+        method: post-processing
+        include:
+          - preprocessing_relax_tools/cut/*.cpp
+          - preprocessing_relax_tools/cut/*.md
+          - preprocessing_relax_tools/relax/*.cpp
+          - preprocessing_relax_tools/relax/*.md
+          - preprocessing_relax_tools/relax/*.sh
+        related_paper_globs:
+          - documents/paper/**/Surface Diffusion Defects & Strain/*.pdf

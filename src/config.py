@@ -39,6 +39,7 @@ OPENAI_API_KEY = get_env("OPENAI_API_KEY")
 
 DATA_DIR = PROJECT_ROOT / get_env("DATA_DIR", "data")
 STORAGE_DIR = PROJECT_ROOT / get_env("STORAGE_DIR", "storage")
+MANIFEST_PATH = PROJECT_ROOT / get_env("MANIFEST_PATH", "manifest.yaml")
 
 
 class OpenAICompatibleLLM(OpenAI):

@@ -2,13 +2,18 @@ import json
 from pathlib import Path
 from hashlib import md5
 
-from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, StorageContext
-from llama_index.readers.file import PyMuPDFReader
-
+from llama_index.core import VectorStoreIndex, StorageContext
 from llama_index.vector_stores.milvus import MilvusVectorStore
 
-
-from src.config import MILVUS_URI, MILVUS_COLLECTION, EMBED_DIM, DATA_DIR
+from src.config import (
+    PROJECT_ROOT,
+    MILVUS_URI,
+    MILVUS_COLLECTION,
+    EMBED_DIM,
+    DATA_DIR,
+    MANIFEST_PATH,
+)
+from src.readers import iter_sources, load_source_documents
 
 
 TRACK_FILE = Path("ingested_files.json")
@@ -20,7 +25,9 @@ def file_hash(path: Path):
 
 def load_track():
     if TRACK_FILE.exists():
-        return json.loads(TRACK_FILE.read_text())
+        raw = TRACK_FILE.read_text().strip()
+        if raw:
+            return json.loads(raw)
     return {}
 
 
@@ -28,31 +35,18 @@ def save_track(data):
     TRACK_FILE.write_text(json.dumps(data, indent=2))
 
 
-def get_track_key(path: Path):
-    return path.relative_to(DATA_DIR).as_posix()
-
-
-def iter_document_files():
-    return sorted(file for file in Path(DATA_DIR).rglob("*") if file.is_file())
-
-
 def get_new_documents():
     tracked = load_track()
     new_files = []
     updated_track = {}
-    seen_hashes = set()
 
-    for file in iter_document_files():
-        h = file_hash(file)
-        key = get_track_key(file)
+    for source in iter_sources(DATA_DIR, MANIFEST_PATH, PROJECT_ROOT):
+        h = file_hash(source.path)
+        key = source.track_key
         updated_track[key] = h
 
-        if h in seen_hashes:
-            continue
-        seen_hashes.add(h)
-
         if key not in tracked or tracked[key] != h:
-            new_files.append(file)
+            new_files.append(source)
 
     return new_files, updated_track
 
@@ -76,12 +70,8 @@ def build_or_update_index():
 
     print(f"Ingesting {len(new_files)} new files...")
 
-    documents = SimpleDirectoryReader(
-        input_files=[str(f) for f in new_files],
-        file_extractor={
-            ".pdf": PyMuPDFReader()
-        }
-    ).load_data()
+    documents = load_source_documents(new_files)
+    print(f"Loaded {len(documents)} document chunks.")
 
     index = VectorStoreIndex.from_documents(
         documents,
@@ -106,6 +96,10 @@ def main():
         print("\nSources:")
         for i, node in enumerate(res.source_nodes):
             print(f"\n--- Source {i+1} ---")
+            metadata = node.node.metadata
+            print("file:", metadata.get("file_path"))
+            print("type:", metadata.get("source_type"))
+            print("component:", metadata.get("component_id"))
             print(node.text[:300])  # 截断显示
 
 if __name__ == "__main__":
