@@ -85,6 +85,7 @@ pure_eval==0.2.3
 pydantic==2.13.3
 pydantic_core==2.46.3
 Pygments==2.20.0
+PyMuPDF==1.27.2.3
 pymilvus==2.6.12
 pyparsing==3.3.2
 pypdf==6.10.2
