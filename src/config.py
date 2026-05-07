@@ -12,11 +12,20 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 load_dotenv(PROJECT_ROOT / ".env")
 
 
-def get_env(name: str, default: str | None = None, required: bool = False) -> str | None:
+def get_env(name: str, default: str | None = None) -> str | None:
     value = os.getenv(name, default)
-    if required and not value:
+    return value
+
+
+def get_required_env(name: str) -> str:
+    value = get_env(name)
+    if not value:
         raise RuntimeError(f"Missing required environment variable: {name}")
     return value
+
+
+def get_str_env(name: str, default: str) -> str:
+    return os.getenv(name, default)
 
 
 def get_int_env(name: str, default: int) -> int:
@@ -24,22 +33,24 @@ def get_int_env(name: str, default: int) -> int:
     return int(value) if value else default
 
 
-LLM_PROVIDER = get_env("LLM_PROVIDER", "openai")
-EMBED_PROVIDER = get_env("EMBED_PROVIDER", "openai")
+LLM_PROVIDER = get_str_env("LLM_PROVIDER", "openai")
+EMBED_PROVIDER = get_str_env("EMBED_PROVIDER", "openai")
 
-LLM_MODEL = get_env("LLM_MODEL", required=True)
-EMBED_MODEL = get_env("EMBED_MODEL", required=True)
+LLM_MODEL = get_required_env("LLM_MODEL")
+EMBED_MODEL = get_required_env("EMBED_MODEL")
 LLM_CONTEXT_WINDOW = get_int_env("LLM_CONTEXT_WINDOW", 65536)
 LLM_NUM_OUTPUT = get_int_env("LLM_NUM_OUTPUT", 4096)
+CHUNK_SIZE = get_int_env("CHUNK_SIZE", 2048)
+CHUNK_OVERLAP = get_int_env("CHUNK_OVERLAP", 128)
 
 DEEPSEEK_API_KEY = get_env("DEEPSEEK_API_KEY")
-DEEPSEEK_BASE_URL = get_env("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
+DEEPSEEK_BASE_URL = get_str_env("DEEPSEEK_BASE_URL", "https://api.deepseek.com")
 
 OPENAI_API_KEY = get_env("OPENAI_API_KEY")
 
-DATA_DIR = PROJECT_ROOT / get_env("DATA_DIR", "data")
-STORAGE_DIR = PROJECT_ROOT / get_env("STORAGE_DIR", "storage")
-MANIFEST_PATH = PROJECT_ROOT / get_env("MANIFEST_PATH", "manifest.yaml")
+DATA_DIR = PROJECT_ROOT / get_str_env("DATA_DIR", "data")
+STORAGE_DIR = PROJECT_ROOT / get_str_env("STORAGE_DIR", "storage")
+MANIFEST_PATH = PROJECT_ROOT / get_str_env("MANIFEST_PATH", "manifest.yaml")
 
 
 class OpenAICompatibleLLM(OpenAI):
@@ -100,3 +111,5 @@ EMBED_DIM = 1536
 ##############################################################################
 Settings.llm = setup_llm()
 Settings.embed_model = setup_embed_model()
+Settings.chunk_size = CHUNK_SIZE
+Settings.chunk_overlap = CHUNK_OVERLAP

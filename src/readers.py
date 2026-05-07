@@ -19,8 +19,6 @@ SKIP_PARTS = {".git", "__pycache__", ".venv"}
 MAX_TEXT_CHARS = 24000
 LINE_CHUNK_SIZE = 120
 LINE_CHUNK_OVERLAP = 12
-
-
 @dataclass(frozen=True)
 class SourceFile:
     path: Path
@@ -59,6 +57,11 @@ def normalize_metadata(metadata: dict[str, Any]) -> dict[str, Any]:
         else:
             normalized[key] = value
     return normalized
+
+
+def compact_related_papers(paths: Iterable[str]) -> dict[str, Any]:
+    papers = sorted(paths)
+    return {"related_paper_count": len(papers)}
 
 
 def slugify(value: str) -> str:
@@ -120,16 +123,13 @@ def iter_manifest_sources(manifest_path: Path, project_root: Path) -> list[Sourc
         project_meta = {
             "project_id": project.get("project_id"),
             "project_title": project.get("title"),
-            "project_description": project.get("description"),
-            "project_tags": project.get("tags", []),
-            "source_root": str(source_root),
-            "origin_root": project.get("origin_root"),
         }
 
         for component in project.get("components", []):
             related_papers = resolve_related_papers(
                 component.get("related_paper_globs", []), project_root
             )
+            related_paper_meta = compact_related_papers(related_papers)
             component_meta = {
                 **project_meta,
                 "component_id": component.get("component_id"),
@@ -137,7 +137,7 @@ def iter_manifest_sources(manifest_path: Path, project_root: Path) -> list[Sourc
                 "source_role": component.get("source_role"),
                 "system": component.get("system"),
                 "method": component.get("method"),
-                "related_papers": related_papers,
+                **related_paper_meta,
             }
 
             for pattern in component.get("include", []):
